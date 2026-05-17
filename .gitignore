@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.python-version
+
+# Generated artifacts
+work/
+renders/
+*.mp4
+*.MOV
+*.mov
+*.wav
+*.jpg
+*.png
+!docs/**/*.png
+!assets/**/*.png
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Claude Code
+.claude/worktrees/
+.claude/scheduled_tasks.lock
