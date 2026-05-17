@@ -12,7 +12,7 @@ import argparse, json, subprocess, sys
 from pathlib import Path
 import yaml
 
-OVERLAY_SCRIPT = Path("/Users/mateuszsawka/Projects/priv/ai/ns/video-edits/.claude/skills/agents-anonymous-video/scripts/overlay_terminal.py")
+OVERLAY_SCRIPT = Path(__file__).resolve().parent / "overlay_terminal.py"
 ROOT = Path(__file__).resolve().parent.parent
 
 def slice_words(src_transcript: Path, t_in: float, t_out: float, out_json: Path):

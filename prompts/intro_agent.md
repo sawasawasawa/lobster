@@ -1,9 +1,9 @@
 # Intro agent prompt . Ralphthon 2026
 
-Verbatim prompt fed to a Claude Code Engineer agent to generate the
-5-second `intro.mp4` for the Ralphthon submission. The agent ran in a
-worktree, completed in ~5 minutes, produced 1080x1920 30fps mp4 at
-72 KB, hit every hard spec.
+Verbatim prompt fed to a coding agent to generate the 5-second
+`intro.mp4` for the Ralphthon submission. The agent ran in a worktree,
+completed in ~5 minutes, produced 1080x1920 30fps mp4 at 72 KB, hit
+every hard spec.
 
 Reuse pattern: change the event context block + palette + card
 timeline. Keep the hard specs + done definition.
@@ -32,19 +32,9 @@ NO QUESTIONS . execute. Write the final file to:
 - AI hackathon, builder energy
 - Prizes: $10k OpenAI API credits, 6mo ChatGPT Pro, $3k Network School credits
 
-## Visual identity (mimic AA × NS event reel intros, NEW branding)
+## Visual identity
 
-Reference doc: `<repo>/.claude/skills/agents-anonymous-video/SKILL.md`
-(read this first for the AA terminal/pixel-block language).
-
-The AA intro is at
-`<repo>/.claude/skills/agents-anonymous-video/assets/intro_aa.mp4` .
-extract a couple of frames with ffmpeg so you can see the AA aesthetic:
-dark terminal background `#07090C`, JetBrains Mono, `>` prompt, glowing
-pixel-block logo, "AGENTS ANONYMOUS" word-spaced. We are EVOKING the
-same aesthetic, NOT copying.
-
-Build a NEW intro for RALPHTHON. The card progression I want over 5s:
+Build a fresh intro for RALPHTHON. The card progression I want over 5s:
 
 - t=0.0-0.6s . terminal cursor blinks, `> init ralphthon...` types in
   (green text)
@@ -65,29 +55,25 @@ Build a NEW intro for RALPHTHON. The card progression I want over 5s:
 - Background: deep near-black `#07090C` with very faint scanline / dot
   grid
 - Primary terminal text: `>_` prompt green `#87C76B`
-- RALPHTHON title accent: lobster red `#D9533F` (NOT AA-orange . this
-  is a different event)
+- RALPHTHON title accent: lobster red `#D9533F`
 - Subtle accents: cool white `#E8EEF5`
-- NEVER use pure black, NEVER use AA-orange or NS-blue (those are
-  reserved for AA × NS reels)
+- NEVER use pure black
 
 ## Tools you can use (your choice . pick whatever is fastest)
 
 1. **Pure ffmpeg with drawtext/drawbox**: fastest path. Use multiple
    drawtext filters with `enable='between(t,a,b)'` for timed reveals.
    JetBrains Mono Bold at
-   `/Users/mateuszsawka/Library/Fonts/JetBrainsMonoNL-Bold.ttf`.
-2. **PIL → 150 PNGs → ffmpeg image2 → mp4**: better typography control
+   `~/Library/Fonts/JetBrainsMonoNL-Bold.ttf`.
+2. **PIL > 150 PNGs > ffmpeg image2 > mp4**: better typography control
    if needed.
-3. **HTML/CSS → headless chromium → mp4**: most flexible but slowest
+3. **HTML/CSS > headless chromium > mp4**: most flexible but slowest
    to spin up. Skip unless 1+2 fail.
 
 ## Constraints
 
 - NO em dashes (U+2014) or en dashes (U+2013) anywhere in the rendered
   text. Use periods, commas, dots, or `·` (U+00B7).
-- NO claim that this is the "locked AA intro" . this is a NEW asset
-  for Ralphthon.
 - The title text MUST be exactly "RALPHTHON" (one word, all caps).
 - Make sure the lobster emoji 🦞 renders.
 
@@ -105,21 +91,19 @@ Budget: 8 minutes. If you blow past 6 minutes, simplify (drop the
 scanline pulse, drop the status block animation, just render a clean
 static-then-typed card).
 
-Make it cool. The user has high standards and has done dozens of these
-reels.
+Make it cool.
 
 ---
 
 ## What the agent did
 
-- Read SKILL.md and the locked AA intro frames to anchor on aesthetic
-- First attempt: pure ffmpeg drawtext with Apple Color Emoji for 🦞 →
+- First attempt: pure ffmpeg drawtext with Apple Color Emoji for 🦞 >
   hung with `Monochromatic (1bpp) fonts are not supported`
-- Switched to PIL → PNG sequence → ffmpeg image2 pipeline
+- Switched to PIL > PNG sequence > ffmpeg image2 pipeline
 - Pre-rendered 🦞 + ⚡ via PIL from Apple Color Emoji at 160px, scaled
   to 64x64
-- Layered: typewriter prompt (0.0-0.6s) → title + subline (0.6-2.0s) →
-  status block fade-in (2.0-3.5s) → hold (3.5-4.7s) → fade-to-near-black
+- Layered: typewriter prompt (0.0-0.6s) > title + subline (0.6-2.0s) >
+  status block fade-in (2.0-3.5s) > hold (3.5-4.7s) > fade-to-near-black
   (4.7-5.0s)
 - Verified at t=0.5, 1.5, 3.0, 4.5, 4.95 by extracting and visually
   inspecting jpgs

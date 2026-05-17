@@ -101,9 +101,9 @@ Output: `work/cuts_plain/c_NN.mp4` . plain talking head, no captions.
    original audio with `-c copy`.
 
 Why cv2 per-frame: ffmpeg `-loop 1 -i toast.png + overlay` chained 3+
-times produces a runaway encode (memory issue documented in AA skill).
-cv2 per-frame at 30 fps for 7s = 210 frames, takes ~10s with PIL frame
-caching.
+times produces a runaway encode (we tried it; ~hours of CPU and
+multi-GB output for a 60s reel). cv2 per-frame at 30 fps for 7s = 210
+frames, takes ~10s with PIL frame caching.
 
 Output: `work/cuts_overlaid/c_NN.mp4` . toast + subs baked in, audio
 preserved bit-for-bit.

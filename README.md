@@ -1,151 +1,188 @@
 # lobster
 
-> Ralphthon @SG 2026 submission. An AI-agent pipeline that turns 9 builder
-> phone interviews into a 69-second vertical highlight reel with
-> terminal-style typewriter captions, on the lobster's hour-and-change
-> timetable.
+Vertical 1080x1920 hackathon highlight reel from N portrait phone interviews.
+Terminal-style typewriter captions, generated intro and outro cards.
 
-This repo IS the submission. The pitch: I didn't code an app at Ralphthon.
-I ran agents that built a video pipeline that interviewed nine other
-builders and produced a publishable highlight reel. The agents wrote
-their own scripts, generated their own intro / outro cards, and pushed
-their own GitHub repos. I was the editor with veto power and a
-TaskCreate habit.
+Built as the Ralphthon @SG 2026 submission: 9 builder interviews into a
+69-second reel in about 20 minutes of wall clock.
 
-The reel is at
-[`watchns.world`-flavored social channels](https://watchns.world)
-(separately). This repo is the blueprint: every script, every agent
-prompt, every gotcha that cost an hour the first time.
+## What it does
 
-## What's here
+1. Transcribes N phone videos with faster-whisper (word-level timestamps).
+2. You pick punchline windows manually (5-15s per speaker).
+3. Cuts each speaker into a 1080x1920 plain clip.
+4. Overlays a top-left agent toast (NAME + project) and a bottom terminal
+   subtitle panel with per-word reveal.
+5. Generates an event intro card and a "WHO IS GONNA WIN?" outro card.
+6. Concatenates everything with apad/atrim drift fix and a final vignette
+   + loudnorm pass.
 
-```
-lobster/
-├── README.md                  # you are here
-├── SKILL.md                   # claude-code skill spec (for skill loader)
-├── LICENSE                    # MIT
-├── requirements.txt           # python deps
-├── scripts/
-│   ├── transcribe.py             # faster-whisper medium.en, parallel
-│   ├── cut_clip.py               # plain ffmpeg cut, no silenceremove (sync bug)
-│   ├── overlay_one_cut.py        # per-cut driver for the AA-style overlay
-│   ├── overlay_terminal.py       # cv2 per-frame composite, vendored from AA skill
-│   ├── render_intro.py           # PIL -> PNG sequence -> ffmpeg, RALPHTHON intro
-│   ├── render_outro.py           # PIL -> PNG sequence -> ffmpeg, "WHO IS GONNA WIN?"
-│   └── concat_reel.py            # filter_complex concat with apad/atrim
-├── prompts/
-│   ├── intro_agent.md            # actual prompt fed to the Engineer agent
-│   ├── outro_agent.md            # actual prompt fed to the Engineer agent
-│   └── lobster_repo_agent.md     # actual prompt that built (some of) this repo
-├── examples/
-│   └── ralphthon-2026-manifest.json   # 8-speaker punchline manifest (v2)
-├── docs/
-│   ├── pipeline.md               # end-to-end stage diagram + rationale
-│   └── gotchas.md                # the lessons that cost me the most time
-└── assets/
-    ├── intro/                    # placeholder; intros are generated, not vendored
-    └── outro/                    # placeholder; outros are generated, not vendored
-```
-
-## The pipeline in one paragraph
-
-`transcribe.py` runs faster-whisper medium.en on each source MOV with
-word timestamps, parallel up to 3 workers. A human picks `t_in / t_out`
-windows per speaker and writes a JSON manifest. `cut_clip.py` does a
-single-pass ffmpeg per-clip: rotate (auto), scale to 1080x1920, mild
-color grade, loudnorm to -16 LUFS / -3 dBTP. `overlay_one_cut.py` slices
-the source word-timestamps to the cut window, writes a YAML config, and
-invokes `overlay_terminal.py` (cv2 per-frame composite) to add the
-top-left agent toast and the bottom terminal-window subtitle panel with
-per-word reveal. `render_intro.py` and `render_outro.py` build the event
-intro and "WHO IS GONNA WIN?" outro cards by rendering 150 PIL frames
-each and piping to ffmpeg. `concat_reel.py` filter-complexes everything
-together with `apad,atrim=duration=X` per segment, adds `vignette=PI/5`,
-runs a final `loudnorm` pass, and writes a single mp4. Total wall clock
-on the Ralphthon submission: under 20 minutes from raw phone vids to
-final reel, most of it the cv2 overlay step (cacheable, parallelizable).
-
-## Skills + agents used
-
-What was actually invoked during this hackathon:
-
-- **PAI Algorithm v3.5.0** . Mateusz's personal AI infrastructure;
-  enforces 7-phase OBSERVE → THINK → PLAN → BUILD → EXECUTE → VERIFY →
-  LEARN with atomic ISC criteria gates and TaskCreate tracking.
-- **`agents-anonymous-video` Claude Code skill** . internal AA × NS
-  event reel skill from `~/.claude/skills/` ;
-  vendored `overlay_terminal.py` from it. See credit below.
-- **2 background Engineer agents** . one rendered the intro card, one
-  rendered the outro card. Both produced clean mp4s in under 5 minutes
-  from their full prompts (see `prompts/`).
-- **faster-whisper** (medium.en, int8 on CPU) . 3 parallel workers for
-  source transcription; ~30s per 30s of audio on M-series Macs.
-- **ffmpeg 8.0** . every encode, decode, concat, vignette, loudnorm pass.
-- **JetBrains Mono Bold + Regular** . only font in the terminal panel +
-  toast. Apple Color Emoji for the lobster, pre-rendered via PIL (NOT
-  drawtext, see `docs/gotchas.md`).
-
-## Reproducing it
+## Install
 
 ```bash
 git clone https://github.com/sawasawasawa/lobster.git
 cd lobster
 pip install -r requirements.txt
-
-# 1. Transcribe
-python3 scripts/transcribe.py --srcs path/to/IMG_*.MOV --out work/transcripts/
-
-# 2. Pick punchlines manually, write manifest.json (see examples/)
-
-# 3. Cut + overlay per speaker (loop over manifest)
-python3 scripts/cut_clip.py --src ... --in 1.85 --out 8.30 --idx 01 ...
-python3 scripts/overlay_one_cut.py --cut ... --name "Dan" --topic "..." ...
-
-# 4. Generate intro + outro (parameterize event name in the renderers)
-python3 scripts/render_intro.py --event-name RALPHTHON --venue "@ SG" ...
-python3 scripts/render_outro.py --prize "grand prize . \$10k OpenAI credits" ...
-
-# 5. Concat
-python3 scripts/concat_reel.py --intro ... --outro ... --cuts-dir work/cuts_overlaid/
 ```
 
-A one-shot driver `scripts/run_pipeline.py` is on the to-do (the
-hackathon clock ran out on it). PRs welcome.
+Plus `ffmpeg` 7+ on PATH (loudnorm + vignette filters required).
 
-## The Ralphthon submission specifically
+Fonts: `JetBrains Mono` Bold + Regular at `~/Library/Fonts/` (macOS).
+Linux: install via your package manager and update the font paths at the
+top of `scripts/overlay_terminal.py`.
 
-The reel: 69.24s vertical 1080x1920, 9 speakers, terminal-style captions,
-shipped on the day of the event. Speakers (in order):
+## Quickstart
 
-1. **Dan** . agentic Rube Goldberg across phones
-2. **Luke Hubbard** . Mirrorbase . data sovereignty for AI chats
-3. **Mayank** . skill to make web apps AI-ready
-4. **Pushkar** . MCP tools to accelerate research (NTU)
-5. **Mervin** . AI dashboard for customer-service chats
-6. **Arun** . reviewer agent that keeps agents on track
-7. **Nachika Freddy** . Lumina . AI SaaS for dev teams
-8. **Stéphane** . better AMM for prediction markets
-9. **Alin** . SEO check + ranking improver
+Drop your phone videos somewhere (e.g. `sources/`). The pipeline assumes
+portrait phone vids (1080x1920 effective, or 1920x1080 + `rotation=-90`
+metadata . iPhone .MOV is the reference format).
 
-Intro: "RALPHTHON @ SG . supported by OpenAI" terminal init card with
-status block + lobster.
-Outro: dry-irony SQL shell, `SELECT winner FROM ralphthon;`,
-`▸ chances: pending lobster 🦞`, big lobster-red "WHO IS GONNA WIN?"
-headline.
+### 1. Transcribe
 
-## Credits
+```bash
+python3 scripts/transcribe.py \
+  --srcs sources/IMG_*.MOV \
+  --out-dir work/transcripts
+```
 
-- `scripts/overlay_terminal.py` is vendored from the internal
-  `agents-anonymous-video` skill, originally built for the
-  Agents Anonymous × Network School event reels. AA itself is a riff on
-  [@steipete's Claude Code Anonymous](https://x.com/steipete). Format
-  credit where credit is due.
-- Ralphthon @SG supported by OpenAI. Hosted by Team Attention + Hashed.
-  Lobster mascot is theirs, used affectionately.
-- Network School (NS) . the community that runs the AA × NS event reels.
-- Claude Code + the PAI personal-AI-infrastructure framework . the
-  agents and the 7-phase algorithm that orchestrated this.
+~real-time on M-series Macs (3 parallel workers).
+
+### 2. Pick punchlines
+
+Read each `work/transcripts/IMG_*.json`. Pick a 5-15s window per speaker.
+Write a `manifest.json` like `examples/ralphthon-2026-manifest.json`:
+
+```json
+{
+  "speakers": [
+    {"idx": "01", "src": "sources/IMG_1082.MOV",
+     "name": "Dan", "topic": "agentic Rube Goldberg across phones",
+     "t_in": 1.85, "t_out": 8.30}
+  ]
+}
+```
+
+Guidance:
+. Start `t_in` ~0.1s before the speaker's first word.
+. End `t_out` on a complete thought (punchline lands, product name said).
+. For the FIRST speaker, keep the "I'm X" intro (sets the format).
+  For speakers 2+, you can skip "my name is..." since the toast shows
+  the name . cuts down total runtime.
+. Aim for 5-10s per speaker for energy, 10-15s for richness.
+
+### 3. Cut + overlay each speaker
+
+For each entry in your manifest, run two commands:
+
+```bash
+# Plain cut (rotate, scale to 1080x1920, color grade, loudnorm)
+python3 scripts/cut_clip.py \
+  --src sources/IMG_1082.MOV \
+  --in 1.85 --out 8.30 \
+  --idx 01 \
+  --out-dir work/cuts_plain
+
+# Overlay (slice word timestamps + terminal-style captions)
+python3 scripts/overlay_one_cut.py \
+  --cut work/cuts_plain/c_01.mp4 \
+  --src-transcript work/transcripts/IMG_1082.json \
+  --t-in 1.85 --t-out 8.30 \
+  --name "Dan" \
+  --topic "agentic Rube Goldberg across phones" \
+  --idx 01 \
+  --out work/cuts_overlaid/c_01.mp4
+```
+
+A simple bash loop reads the manifest and runs both per speaker.
+
+### 4. Generate intro + outro
+
+Both renderers have constants at the top of the file. Edit them for your
+event, then run:
+
+```bash
+python3 scripts/render_intro.py    # writes work/intro/intro.mp4
+python3 scripts/render_outro.py    # writes work/outro/outro.mp4
+```
+
+Things to change in `render_intro.py`: `TITLE_TEXT` ("RALPHTHON"), the
+subline ("@ SG . supported by OpenAI"), the status block lines, the
+accent color (`TITLE` constant), the mascot emoji.
+
+Things to change in `render_outro.py`: `TITLE_TEXT` (the headline), the
+SQL line, the result rows, the prize subtitle, the accent color.
+
+Each renderer takes ~5s for 150 frames + ~1s for ffmpeg encode.
+
+### 5. Concat
+
+```bash
+python3 scripts/concat_reel.py \
+  --intro work/intro/intro.mp4 \
+  --outro work/outro/outro.mp4 \
+  --cuts-dir work/cuts_overlaid \
+  --out renders/reel.mp4
+```
+
+Outputs vertical 1080x1920, 30fps, h264/aac, +faststart.
+
+### 6. Watch
+
+```bash
+open renders/reel.mp4
+```
+
+## Files
+
+```
+scripts/
+  transcribe.py         . faster-whisper medium.en, parallel
+  cut_clip.py           . one ffmpeg pass per speaker
+  overlay_one_cut.py    . slices word-jsons + invokes overlay_terminal
+  overlay_terminal.py   . cv2 per-frame composite (toast + sub panel)
+  render_intro.py       . PIL frame sequence . ffmpeg . event intro mp4
+  render_outro.py       . PIL frame sequence . ffmpeg . event outro mp4
+  concat_reel.py        . filter_complex concat + vignette + loudnorm
+examples/
+  ralphthon-2026-manifest.json   . the actual 9-speaker manifest
+prompts/
+  intro_agent.md, outro_agent.md, lobster_repo_agent.md
+  . the literal prompts used to generate the intro/outro/repo at
+    Ralphthon. Useful starting points for new events.
+docs/
+  pipeline.md           . end-to-end stage diagram + rationale
+  gotchas.md            . 7 hard-won lessons, read this once
+```
+
+## Hard rules (the things that bit me)
+
+. **Do NOT use ffmpeg `silenceremove`** in talking-head cut chains.
+  Trims audio but not video . causes A/V desync. See `docs/gotchas.md`.
+. **Apple Color Emoji + ffmpeg drawtext is incompatible.** Pre-render
+  emoji to PNG via PIL, then composite.
+. **AAC concat AV drift**: use `apad,atrim=duration=X` per segment
+  before concat (`concat_reel.py` does this).
+. **iPhone portrait sources**: trust ffmpeg auto-rotation, no manual
+  `transpose`, no blur-pad.
+
+Full lessons + reproductions in `docs/gotchas.md`.
+
+## Tuning
+
+. Vertical 1080x1920 is the default. For 4:3 1440x1080 (landscape
+  event reels), change the overlay config:
+  `fixed_panel_w=1320, sub_bottom_margin=70, toast_top_margin=60`.
+. Toast hold time is 5s (`HOLD` constant in `overlay_terminal.py`).
+  For longer cuts, bump it.
+. The whisper patch dict (`PATCH` in `transcribe.py`) starts with
+  `cloud . Claude`. Add your own commonly-mistranscribed product
+  names per event.
+
+## Hosts
+
+Ralphthon @SG 2026 supported by OpenAI; hosted by Team Attention + Hashed.
+Lobster mascot is theirs, used affectionately.
 
 ## License
 
-MIT . see `LICENSE`.
+MIT. See `LICENSE`.

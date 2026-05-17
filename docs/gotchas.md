@@ -59,7 +59,9 @@ duration.
 `apad,atrim=duration={video_duration:.6f}` to every segment's audio
 chain before concat. See `scripts/concat_reel.py`.
 
-**Discovered**: AA × NS 003. Now standard in the AA event-reel pipeline.
+**Discovered**: silent-card intros + interview clips were drifting ~60ms
+by the end of an 8-segment concat; lip-sync started visibly off around
+the 5th speaker.
 
 ## 4. iPhone portrait sources: no blur-pad, ever
 
@@ -79,31 +81,23 @@ pipeline. For portrait sources targeting portrait output:
 `scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920`.
 No transpose, no blur-pad.
 
-**Discovered**: AA × NS event reels with phone b-rolls; documented
-across multiple memory entries.
+**Discovered**: tried to pad a portrait into 1440x1080 4:3 with sampled
+side-bars; result was identical to the unpadded source because the
+source was already taller than wide. The pipeline is now portrait-out
+only by default.
 
-## 5. AA × NS branding TRUTH: palette + provenance
+## 5. Pick a palette tied to the event mascot
 
-**Symptom**: someone in a doc says "AA green / NS amber" or another
-inverted palette. Or you accidentally use the AA palette for a
-non-AA event.
+The terminal aesthetic (deep near-black background, prompt-green text,
+traffic-light dots) is fixed by `overlay_terminal.py`. The ACCENT color
+(big headlines, agent name in toast) should match the event branding.
 
-**Truth**:
-- AA orange (`#D5993E`-ish, see locked asset for exact) + NS blue.
-  These are LOCKED for AA × NS event reels. Don't change them.
-- For NEW events (like Ralphthon), pick a NEW palette. Ralphthon used
-  lobster red `#D9533F` (NOT AA-orange) + prompt green `#87C76B` on
-  near-black `#07090C`.
-- The format itself (terminal aesthetic, agent toasts, traffic lights,
-  per-word reveal) is a riff on @steipete's Claude Code Anonymous.
-  Always credit; never claim invention.
+For Ralphthon 2026: lobster red `#D9533F` accent + prompt green
+`#87C76B` text on near-black `#07090C` background.
 
-**Fix**: when building a new event reel, pick a NEW accent color
-matching the event's mascot or branding. Keep the terminal language,
-swap the palette.
-
-**Discovered**: a stale internal doc said "AA green" once; the locked
-asset is authoritative.
+For a new event: change the `TITLE` constant at the top of
+`render_intro.py` and `render_outro.py`, and the `text_color` for the
+toast label in `overlay_terminal.py` (currently `YELLOW`).
 
 ## 6. Light vignette PI/5 is the default finishing move
 

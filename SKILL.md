@@ -1,32 +1,35 @@
 ---
 name: lobster
-description: Build an AA-style vertical hackathon-interview highlight reel from N portrait phone videos. Top-left agent toast + terminal-window per-word subtitles + generated event intro/outro cards. Use when the user hands you raw phone interviews from a hackathon, demo day, or similar event and asks for a 60-80s vertical reel.
+description: Build a vertical 1080x1920 hackathon-interview highlight reel from N portrait phone videos. Top-left agent toast + bottom terminal-window per-word subtitles + generated event intro/outro cards. Use when the user hands you raw phone interviews from a hackathon, demo day, or similar event and asks for a 60-80s vertical reel.
 ---
 
 # lobster . vertical hackathon reel kit
 
-This skill is the distilled pipeline that built the Ralphthon @SG 2026
-highlight reel. It assumes:
+Pipeline for turning raw portrait phone interviews into a single
+vertical 1080x1920 highlight reel with terminal-style typewriter
+captions and generated event intro/outro cards.
+
+Assumptions:
 
 - Sources are portrait phone videos (1080x1920 effective; either native
   portrait or 1920x1080 with `rotation=-90` metadata)
 - ~5-10 speakers, each saying their name + what they're building
 - Output is a single vertical 1080x1920 mp4, ~60-80 seconds total
-- Captions are AA × NS terminal-style: top-left agent toast +
-  bottom traffic-light terminal panel with per-word reveal
+- Captions are terminal-style: top-left agent toast (yellow border,
+  close X, slide-in/hold/slide-out) + bottom traffic-light terminal
+  panel with `>_` prompt + per-word reveal + blinking cursor
 
 ## When to use
 
 - "Cut this hackathon footage into a reel"
-- "Same style as AA × NS but for [other event]"
-- "9 phone interviews, 80 seconds, vertical, name + project per person"
+- "Vertical 1080x1920, ~80s, name + project per person"
 
 ## When NOT to use
 
-- Landscape sources (use the AA × NS pipeline directly at 1440x1080 4:3)
-- Need anonymized faces (use the AA skill's `pixelate.py`)
-- Need word-perfect typewriter timing with master scribe sources (use
-  the HyperFrames path in the AA skill)
+- Landscape sources (the overlay panel dimensions assume vertical)
+- Need anonymized faces (this kit does not blur or pixelate)
+- Need word-perfect typewriter timing on long-form footage (this
+  pipeline is tuned for short punchlines, 5-15s each)
 
 ## Pipeline (5 stages)
 
@@ -49,27 +52,19 @@ highlight reel. It assumes:
 
 Intro/outro cards: `scripts/render_intro.py` and `scripts/render_outro.py`
 render 150 PIL frames each at 1080x1920 then pipe to ffmpeg.
-Parameterize event name, prize line, palette.
-
-## Reference event
-
-Ralphthon @SG 2026 (`examples/ralphthon-2026-manifest.json`):
-- 9 speakers, 64s of cuts + 5s intro + 5s outro = 74s reel
-- Lobster red `#D9533F` accent (NOT AA orange . different event)
-- Prompt green `#87C76B` for terminal text
-- Deep near-black `#07090C` background
+Parameterize event name, prize line, palette via constants at the top
+of each renderer.
 
 ## Hard rules
 
 - NO em dashes (U+2014) or en dashes (U+2013) in any text . code,
-  drawtext, captions, README. PAI rule, applies repo-wide.
+  drawtext, captions, README. Mateusz hates them.
 - NO blur-pad for portrait sources (see `docs/gotchas.md`).
-- NO claim of "locked AA asset" . this kit generates NEW cards per event.
 
 ## See also
 
 - `docs/pipeline.md` . full stage diagram + per-stage rationale
 - `docs/gotchas.md` . the hard-won lessons (silenceremove desync, emoji
-  + drawtext incompat, AAC concat drift, AA branding truth)
+  + drawtext incompat, AAC concat drift)
 - `prompts/` . the actual agent prompts used to generate the Ralphthon
   intro and outro cards (good starting points for new events)

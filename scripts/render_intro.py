@@ -2,19 +2,30 @@
 """
 Ralphthon hackathon . 5s vertical intro (1080x1920 / 30fps).
 
-Evokes AA × NS terminal aesthetic with a NEW Ralphthon palette
-(deep near-black bg, prompt green, lobster red title).
+Terminal-style init card: deep near-black bg, prompt green text,
+lobster red title, status block, lobster + lightning emoji.
+
+Edit the constants below (TITLE_TEXT, SUBLINE, STATUS_LINES, palette)
+to retarget for a different event.
+
+OUT = intro.mp4 written next to this script.
 """
 import subprocess, shlex, sys, os, pathlib
 
-OUT_DIR = pathlib.Path(__file__).parent
+OUT_DIR = pathlib.Path("work/intro")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 OUT = OUT_DIR / "intro.mp4"
 
 # -------- assets --------
-FONT_MONO = "/Users/mateuszsawka/Library/Fonts/JetBrainsMonoNL-Bold.ttf"
+_HOME = os.path.expanduser("~")
+_MONO_CANDIDATES = [
+    f"{_HOME}/Library/Fonts/JetBrainsMonoNL-Bold.ttf",
+    f"{_HOME}/Library/Fonts/JetBrainsMono-Bold.ttf",
+    "/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Bold.ttf",
+]
+FONT_MONO = next((p for p in _MONO_CANDIDATES if os.path.exists(p)),
+                 "/System/Library/Fonts/Menlo.ttc")
 FONT_EMOJI = "/System/Library/Fonts/Apple Color Emoji.ttc"
-if not os.path.exists(FONT_MONO):
-    FONT_MONO = "/System/Library/Fonts/Menlo.ttc"
 
 # -------- palette --------
 BG       = "0x07090C"      # background fill

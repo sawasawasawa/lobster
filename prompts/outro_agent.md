@@ -1,11 +1,11 @@
 # Outro agent prompt . Ralphthon 2026
 
-Verbatim prompt fed to a Claude Code Engineer agent to generate the
-5-second `outro.mp4`. The agent ran in a worktree, completed in
-~4.5 minutes, produced 1080x1920 30fps mp4 at 213 KB.
+Verbatim prompt fed to a coding agent to generate the 5-second
+`outro.mp4`. The agent ran in a worktree, completed in ~4.5 minutes,
+produced 1080x1920 30fps mp4 at 213 KB.
 
-Reuse pattern: change the prize line, the headline question, the
-event name in the title bar. Keep everything else.
+Reuse pattern: change the prize line, the headline question, the event
+name in the title bar. Keep everything else.
 
 ---
 
@@ -42,12 +42,6 @@ Dry terminal-style irony (NOT shouty hype, NOT wholesome earnest).
 Picture: a terminal in the void, a single prompt, a typed-out question,
 then a `[REDACTED]` punchline.
 
-## Visual identity
-
-Reference: `<repo>/.claude/skills/agents-anonymous-video/SKILL.md`
-Existing AA outro generator:
-`<repo>/.claude/skills/agents-anonymous-video/scripts/make_outro_card.py`
-
 ## Card progression (5.0s timeline)
 
 - t=0.0-0.6s . fade in dark terminal card: title bar with 3 traffic-
@@ -73,11 +67,11 @@ Existing AA outro generator:
 - Result rows: dim white `#A8B4C2`
 - "WHO IS GONNA WIN?" big text: lobster red `#D9533F`
 - Traffic-light dots: red `#FF5F56`, yellow `#FFBD2E`, green `#27C93F`
-- NEVER pure black, NEVER AA-orange / NS-blue
+- NEVER pure black
 
 ## Tools . your choice
 
-PIL → PNG sequence → ffmpeg image2 → mp4 is recommended for typography
+PIL > PNG sequence > ffmpeg image2 > mp4 is recommended for typography
 + emoji control.
 
 ## Constraints
@@ -85,7 +79,6 @@ PIL → PNG sequence → ffmpeg image2 → mp4 is recommended for typography
 - NO em dashes (U+2014) or en dashes (U+2013).
 - "WHO IS GONNA WIN?" . exact text, all caps, with the question mark.
 - Lobster emoji 🦞 must render visibly.
-- NO claim that this is the "locked AA outro".
 
 ## Done definition
 
@@ -103,8 +96,6 @@ Make it dry and funny.
 
 ## What the agent did
 
-- Read AA's `make_outro_card.py` for the locked terminal-card visual
-  vocabulary
 - Chose per-frame PIL render over chained ffmpeg drawtext for the
   typing animation + row stagger + headline scale-up
 - Caught a hidden em dash in the title bar text on first verification

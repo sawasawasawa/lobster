@@ -16,7 +16,8 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 # ============================================================================
 # CONFIG
 # ============================================================================
-OUT_DIR = Path("/Users/mateuszsawka/Projects/priv/ai/ns/video-edits/projects/ralphthon-hackathon/work/outro")
+OUT_DIR = Path("work/outro")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 FRAMES_DIR = OUT_DIR / "_frames"
 FINAL_MP4 = OUT_DIR / "outro.mp4"
 
@@ -25,7 +26,15 @@ FPS = 30
 DURATION = 5.0
 TOTAL_FRAMES = int(round(DURATION * FPS))  # 150
 
-JBM_BOLD = "/Users/mateuszsawka/Library/Fonts/JetBrainsMonoNL-Bold.ttf"
+import os as _os
+_HOME = _os.path.expanduser("~")
+_JBM_CANDIDATES = [
+    f"{_HOME}/Library/Fonts/JetBrainsMonoNL-Bold.ttf",
+    f"{_HOME}/Library/Fonts/JetBrainsMono-Bold.ttf",
+    "/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Bold.ttf",
+]
+JBM_BOLD = next((p for p in _JBM_CANDIDATES if _os.path.exists(p)),
+                "/System/Library/Fonts/Menlo.ttc")
 EMOJI_FONT = "/System/Library/Fonts/Apple Color Emoji.ttc"
 
 # Palette

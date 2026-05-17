@@ -1,54 +1,56 @@
 #!/usr/bin/env python3
-"""overlay_terminal.py . composite AA × NS toasts + terminal-window subtitles
-onto a finished review video.
+"""Composite terminal-style agent toasts + per-word subtitle panel onto a video.
 
 INPUT
-  - A video (the pixelated review reel, e.g. aa003_v25_LOCKED_pixelated.mp4)
-  - A YAML config describing the toasts (per-speaker name+topic+t_start) and the
-    subtitle clips (whisper word-timestamp JSON path + clip's [v_start, v_end]
-    in the input timeline, or an `override_text` for non-transcribed segments)
+  . A video (a plain cut, e.g. work/cuts_plain/c_01.mp4)
+  . A YAML config describing the toasts (per-speaker name+topic+t_start) and
+    the subtitle clips (whisper word-timestamp JSON path + clip's [v_start,
+    v_end] in the input timeline, or an `override_text` for non-transcribed
+    segments)
 
 OUTPUT
-  - A new video with toasts (top-left, terminal style with close X, rounded
-    corners, slide-in/out) and word-by-word terminal-window subtitles
-    (bottom-center, fixed full width, 3 traffic-light dots, JBM Bold green text,
-    blinking cursor, "like" filtered out).
+  . A new video with:
+    . Top-left agent toast: yellow border-left, terminal close-X, rounded
+      corners, slide-in (0.45s) / hold (5s) / slide-out (0.45s)
+    . Bottom terminal-window subtitle panel: 3 traffic-light dots, ">_ "
+      green prompt, JetBrains Mono Bold green text, fixed full-width panel,
+      blinking cursor, per-word reveal synced to whisper timestamps,
+      filler words ("like") filtered out
 
 USAGE
   python3 overlay_terminal.py path/to/config.yaml
 
-CONFIG SCHEMA  (see examples/overlay_terminal_aa003.yaml for a worked example)
+CONFIG SCHEMA
   input:        path to source video
   output:       path to write the composite video
-  fixed_panel_w: 1320            # full-width subtitle panel
-  toast_top_margin: 60           # px from top edge for the toast strip
-  sub_bottom_margin: 70          # px from bottom edge for the subtitle strip
-  toasts:                        # one entry per speaker; toast appears at t_start
-    - slug: k                    # any short id (used in cache filename)
-      label: "> AGENT K"         # yellow line in toast
-      topic: "Editable AI Slides via Codex"   # green line below
-      t_start: 0.30
-  subtitles:                     # one entry per cleaned clip (in input timeline)
-    - words_json: work/words/c_k1.json   # faster-whisper word_timestamps output
+  fixed_panel_w: 1020            # full-width subtitle panel (vertical 1080)
+  toast_top_margin: 110          # px from top edge for the toast strip
+  sub_bottom_margin: 220         # px from bottom edge for the subtitle strip
+  toasts:
+    . slug: 01
+      label: "> DAN"             # yellow line in toast
+      topic: "agentic Rube Goldberg across phones"   # dim line below
+      t_start: 0.20
+  subtitles:
+    . words_json: work/words/c_01.json   # faster-whisper word_timestamps output
       v_start: 0.000
-      v_end:   6.656
-    - override_text: "so I think things are changing here."
+      v_end:   6.450
+    . override_text: "so I think things are changing here."
       v_start: 13.909
       v_end:   15.679
-  drop_words: [like, Like]       # words silently removed from subtitles
-  patches:                       # whisper artifact fixes (token → token)
+  drop_words: [like, Like, um, Um]
+  patches:                       # whisper artifact fixes
     cloud: Claude
-    aClaude: "a Claude"
 
 NOTES
-  - Audio is byte-copied from the input (no re-encode).
-  - cv2 per-frame composite (memory `feedback_ffmpeg_looped_png_overlay_runaway.md`
-    explains why ffmpeg `-loop 1 -i toast.png` + chained overlays is a trap).
-  - Word-by-word reveal is synced to whisper word.start times shifted by the
+  . Audio is byte-copied from the input (no re-encode).
+  . cv2 per-frame composite. We tried ffmpeg `-loop 1 -i toast.png` chained
+    overlays and it produced a runaway encode (hours of CPU, multi-GB output).
+    Per-frame composite is fast (caches by (phrase_idx, n_visible, cursor_on))
+    and predictable.
+  . Word-by-word reveal is synced to whisper word.start times shifted by the
     clip's v_start.
-  - Subtitle panel width is FIXED across phrases so it doesn't jump.
-  - Per memory `feedback_caption_typewriter_hyperframes.md`, this CV2 path
-    avoids the HyperFrames typewriter failures (one-shot success).
+  . Subtitle panel width is FIXED across phrases so it doesn't jump.
 """
 import argparse
 import json
@@ -97,9 +99,33 @@ DOT_GREEN  = (39, 201, 63,  255)
 PANEL_BG  = (16, 20, 28, 220)
 HEADER_BG = (10, 12, 18, 230)
 
-# Fonts (override via env / config if needed)
-JBM_BOLD = '/Users/mateuszsawka/Library/Fonts/JetBrainsMono-Bold.ttf'
-JBM_REG  = '/Users/mateuszsawka/Library/Fonts/JetBrainsMono-Regular.ttf'
+# Fonts. Override via env LOBSTER_FONT_BOLD / LOBSTER_FONT_REG.
+# Defaults try common macOS paths then fall back to Menlo (always present).
+import os as _os
+def _font_path(env_var, candidates, fallback):
+    p = _os.environ.get(env_var)
+    if p and _os.path.exists(p):
+        return p
+    for c in candidates:
+        if _os.path.exists(c):
+            return c
+    return fallback
+
+_HOME = _os.path.expanduser("~")
+JBM_BOLD = _font_path(
+    "LOBSTER_FONT_BOLD",
+    [f"{_HOME}/Library/Fonts/JetBrainsMono-Bold.ttf",
+     f"{_HOME}/Library/Fonts/JetBrainsMonoNL-Bold.ttf",
+     "/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Bold.ttf"],
+    "/System/Library/Fonts/Menlo.ttc",
+)
+JBM_REG = _font_path(
+    "LOBSTER_FONT_REG",
+    [f"{_HOME}/Library/Fonts/JetBrainsMono-Regular.ttf",
+     f"{_HOME}/Library/Fonts/JetBrainsMonoNL-Medium.ttf",
+     "/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Regular.ttf"],
+    "/System/Library/Fonts/Menlo.ttc",
+)
 
 # ---- Helpers ----
 _font_cache = {}
