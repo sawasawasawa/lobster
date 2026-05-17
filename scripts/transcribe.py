@@ -13,9 +13,9 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 import argparse, json, time
 
-# Whisper mis-hears that show up in AI-builder contexts.
-# Extend per event.
-PATCH = {"cloud": "Claude", "Cloud": "Claude"}
+# Whisper mis-hears that show up in your event context.
+# Extend per event. Example: PATCH = {"acme": "ACME", "gpd": "GPT"}
+PATCH = {}
 
 def transcribe_one(args_tuple):
     src_path, out_dir, model_size = args_tuple

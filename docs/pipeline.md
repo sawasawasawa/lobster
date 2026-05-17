@@ -48,8 +48,8 @@ End-to-end stage diagram + per-stage rationale.
 - `vad_filter=True` to skip silence
 - Parallel via `ProcessPoolExecutor`, 3 workers. More workers don't
   help much because of int8 int-throughput; memory bandwidth caps it.
-- Patch dict for whisper mishears: `"cloud" -> "Claude"` is the most
-  common one in AI-builder contexts. Extend per event.
+- Patch dict for whisper mishears: empty by default. Extend per event
+  with your most-mistranscribed product names (e.g. `"gpd" -> "GPT"`).
 
 ## Stage 2: Manifest
 

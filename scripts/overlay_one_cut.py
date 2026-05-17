@@ -74,7 +74,7 @@ def main():
         "toast_top_margin": 110,
         "sub_bottom_margin": 220,
         "drop_words": ["like", "Like", "um", "Um", "uh", "Uh"],
-        "patches": {"cloud": "Claude", "Cloud": "Claude"},
+        "patches": {},
         "toasts": [{
             "slug": args.idx,
             "label": f"> {args.name.upper()}",

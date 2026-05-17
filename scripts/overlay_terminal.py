@@ -39,8 +39,8 @@ CONFIG SCHEMA
       v_start: 13.909
       v_end:   15.679
   drop_words: [like, Like, um, Um]
-  patches:                       # whisper artifact fixes
-    cloud: Claude
+  patches:                       # whisper artifact fixes (optional)
+    gpd: GPT
 
 NOTES
   . Audio is byte-copied from the input (no re-encode).
