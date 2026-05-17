@@ -1,29 +1,30 @@
-"""Transcribe all 6 sources in parallel using faster-whisper medium.en"""
+"""Transcribe one or more source videos with faster-whisper (medium.en).
+
+Writes <out-dir>/<source-stem>.json per input with word-level timestamps.
+
+Example:
+    python3 scripts/transcribe.py \\
+        --srcs sources/IMG_*.MOV \\
+        --out-dir work/transcripts
+"""
+from __future__ import annotations
 from faster_whisper import WhisperModel
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-import json, sys, time
+import argparse, json, time
 
-ROOT = Path(__file__).resolve().parent.parent
-SRCS = [
-    ROOT / "master_clips/IMG_1079.mov",
-    ROOT / "master_clips/IMG_1080.mov",
-    ROOT / "master_clips/IMG_1081.mov",
-    ROOT / "master_clips/IMG_1082.MOV",
-    ROOT / "master_clips/IMG_1083.MOV",
-    ROOT / "master_clips/IMG_1084.MOV",
-]
-OUT = ROOT / "work/transcripts"
-OUT.mkdir(parents=True, exist_ok=True)
-
-# Patches: common whisper miss-hears
+# Whisper mis-hears that show up in AI-builder contexts.
+# Extend per event.
 PATCH = {"cloud": "Claude", "Cloud": "Claude"}
 
-def transcribe_one(src_path):
+def transcribe_one(args_tuple):
+    src_path, out_dir, model_size = args_tuple
     src = Path(src_path)
     t0 = time.time()
-    model = WhisperModel("medium.en", device="cpu", compute_type="int8")
-    segs, info = model.transcribe(str(src), word_timestamps=True, vad_filter=True, language="en")
+    model = WhisperModel(model_size, device="cpu", compute_type="int8")
+    segs, info = model.transcribe(
+        str(src), word_timestamps=True, vad_filter=True, language="en"
+    )
     words = []
     text_parts = []
     for s in segs:
@@ -44,13 +45,30 @@ def transcribe_one(src_path):
         "text": full.strip(),
         "words": words,
     }
-    dst = OUT / f"{src.stem}.json"
+    dst = Path(out_dir) / f"{src.stem}.json"
     dst.write_text(json.dumps(out, indent=1))
     return f"{src.stem}: {len(words)} words in {time.time()-t0:.1f}s"
 
-if __name__ == "__main__":
-    # 6 sources, do up to 3 in parallel (CPU-bound int8 ~stable)
-    with ProcessPoolExecutor(max_workers=3) as ex:
-        for line in ex.map(transcribe_one, SRCS):
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--srcs", nargs="+", required=True,
+                    help="one or more source video paths (mov, mp4)")
+    ap.add_argument("--out-dir", default="work/transcripts",
+                    help="output dir for per-source JSON (default: work/transcripts)")
+    ap.add_argument("--model", default="medium.en",
+                    help="faster-whisper model size (default: medium.en)")
+    ap.add_argument("--workers", type=int, default=3,
+                    help="parallel workers (default: 3)")
+    a = ap.parse_args()
+
+    out_dir = Path(a.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    work = [(s, str(out_dir), a.model) for s in a.srcs]
+    with ProcessPoolExecutor(max_workers=a.workers) as ex:
+        for line in ex.map(transcribe_one, work):
             print(line, flush=True)
     print("DONE", flush=True)
+
+if __name__ == "__main__":
+    main()
